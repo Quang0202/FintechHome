@@ -2,12 +2,15 @@ package com.example.test2
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import android.webkit.WebView
 import android.widget.MediaController
 import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +21,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -32,9 +37,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.motionEventSpy
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.withStyle
@@ -53,10 +63,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             Test2Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+//                    Greeting(
+//                        name = "Android",
+//                        modifier = Modifier.padding(innerPadding)
+//                    )
+                    ExpandableItemList(Modifier.padding(innerPadding))
                 }
             }
         }
@@ -67,31 +78,112 @@ class MainActivity : ComponentActivity() {
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     var isExpanded by remember { mutableStateOf(false) }
     var showReadMore by remember { mutableStateOf(true) }
+    var height by remember {
+        mutableStateOf(0)
+    }
+
     val context = LocalContext.current
     val webView = remember {
-        WebView(context).apply {
-            settings.javaScriptEnabled = true
-        }
+        WebView(context)
     }
     LazyColumn {
         item {
             ExoPlayerView()
         }
-        item (key = "webviewItem"){
-            showTextWebView(
-                isExpanded = isExpanded,
-                showReadMore = showReadMore,
-                onToggleExpand = {
-                    isExpanded = it
-                },
-                onToggleShowButton = {
-                    showReadMore = it
-                },
-                webView = webView)
+        item {
+                val items = listOf(
+                    TimelineItem("No current plan", "Food App", isActive = false),
+                    TimelineItem("Today", "Battery App", isActive = true),
+                    TimelineItem("Tomorrow", "Food App", isActive = false),
+                    TimelineItem("Next week", "Upcoming task", isActive = false)
+                )
+                VerticalTimeline(items)
+        }
+        item(key = "webviewItem") {
+            val html = """
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+        <p>This is a paragraph.</p>
+    """.trimIndent()
+            val density = LocalDensity.current
+            Box {
+                MarkDown(
+                    htmlContent = html,
+                    modifier = (if (!isExpanded) Modifier.height(144.dp) else Modifier)
+                        .fillMaxWidth(),
+                    returnContentHeight = { contentHeight ->
+                        showReadMore = contentHeight!!.dp > 144.dp
+                    },
+                    webView = webView
+                )
+                if (showReadMore && !isExpanded) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(5.dp)
+                            .graphicsLayer {
+                                // Apply blur effect
+                                renderEffect = BlurEffect(radiusX = 10f, radiusY = 10f)
+                            }
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.9f),  // Blur stronger here
+                                        Color.Transparent  // Blur fades out here
+                                    )
+                                )
+                            )
+                            .align(Alignment.BottomCenter)
+                    )
+                }
+            }
+            if (showReadMore) {
+                Box {
+                    if (!isExpanded) {
+//                        Box(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .height(16.dp)
+//                                .background(
+//                                    Brush.verticalGradient(
+//                                        colors = listOf(Color.Transparent, Color.White)
+//                                    )
+//                                )
+//                                .align(Alignment.TopCenter)
+//                                .padding(bottom = with(density){height.toDp()})
+//
+//                        )
+                    }
+                    Text(
+                        text = if (isExpanded) "Read Less" else "Read More",
+                        modifier = Modifier
+                            .clickable {
+                                isExpanded = !isExpanded
+                            },
+                        color = Color.Blue,
+                    )
+                }
+            }
+        }
+
+        item {
+            CircularProgressIndicator()
         }
         items(100) { index ->
             Text(text = "Item: $index")
         }
+    }
+    webView.addOnLayoutChangeListener { _: View, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
+        showReadMore = webView.contentHeight.dp > 114.dp
     }
 }
 
@@ -111,47 +203,6 @@ fun ColoredTextExample(modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier
     )
-}
-
-@Composable
-fun showTextWebView(isExpanded : Boolean, showReadMore : Boolean, onToggleExpand: (Boolean) -> Unit, onToggleShowButton: (Boolean) -> Unit, webView: WebView) {
-
-    val html = """
-        <!DOCTYPE html>
-        <html>
-        <body>
-        <h1>This is a header.</h1>
-        <p>This is a paragraph.</p>
-        <p>This is a paragraph.</p>
-        <p>This is a paragraph.</p>
-        <p>This is a paragraph.</p>
-        </body>
-        </html>
-    """.trimIndent()
-
-    Column {
-        MarkDown(
-            htmlContent = html,
-            modifier = (if (!isExpanded) Modifier.height(144.dp) else Modifier)
-                .fillMaxWidth(),
-            returnContentHeight = { contentHeight ->
-                onToggleShowButton( contentHeight.dp > 144.dp)
-            },
-            webView = webView
-        )
-        if (showReadMore) {
-            Text(
-                text = if (isExpanded) "Read Less" else "Read More",
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .clickable {
-                      onToggleExpand(!isExpanded)
-                    },
-                color = Color.Blue,
-            )
-        }
-    }
-
 }
 
 @Composable
