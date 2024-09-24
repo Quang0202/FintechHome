@@ -1,6 +1,7 @@
 package com.example.test2
 
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -10,6 +11,8 @@ import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -57,23 +60,23 @@ import androidx.media3.ui.PlayerView
 import com.example.test2.ui.theme.Test2Theme
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             Test2Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//                    Greeting(
-//                        name = "Android",
-//                        modifier = Modifier.padding(innerPadding)
-//                    )
-                    ExpandableItemList(Modifier.padding(innerPadding))
+                    PdfViewerScreen(modifier = Modifier.padding(innerPadding), pdfUrl = "https://www.orimi.com/pdf-test.pdf")
+//                    ExpandableItemList(Modifier.padding(innerPadding))
                 }
             }
         }
     }
 }
 
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -89,6 +92,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     LazyColumn {
         item {
             ExoPlayerView()
+        }
+        stickyHeader {
+
         }
         item {
                 val items = listOf(
