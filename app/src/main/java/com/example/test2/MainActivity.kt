@@ -67,8 +67,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             Test2Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    PdfViewerScreen(modifier = Modifier.padding(innerPadding), pdfUrl = "https://www.orimi.com/pdf-test.pdf")
+//                    PdfViewerScreen(modifier = Modifier.padding(innerPadding), pdfUrl = "https://www.orimi.com/pdf-test.pdf")
 //                    ExpandableItemList(Modifier.padding(innerPadding))
+                    Box(modifier = Modifier.padding(innerPadding)){
+                        PdfView(pdfUrl = "https://pdfobject.com/pdf/sample.pdf")
+                    }
+                    
                 }
             }
         }
